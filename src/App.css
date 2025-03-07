@@ -36,3 +36,8 @@
     transform: rotate(360deg);
   }
 }
+
+.navbar-hidden {
+  margin-top: 0; /* Remove space if navbar was adding margin */
+  padding-top: 0; /* Reset padding */
+}
