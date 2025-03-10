@@ -366,7 +366,7 @@ if (loading) {
   // (with the renderSplitTypeInputs and other UI components)
   return (
     
-          <div className="p-4 pt-24">
+          <div className="p-4 pt-28">
             <div className="max-w-6xl w-full mx-auto bg-dark-800 shadow-2xl rounded-2xl border border-dark-700 overflow-hidden">
               {/* Header */}
               <div className="bg-dark-700 p-4 pt-4 sm:p-5 flex items-center justify-between">

@@ -124,7 +124,7 @@ function Dashboard() {
   
         return (
             
-            <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-l from-[#ae8b9c] to-[#09203f] text-white pt-24">
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-l from-[#ae8b9c] to-[#09203f] text-white pt-32">
                 
                 {/* ✅ Welcome Message */}
                 <motion.h1 

@@ -113,7 +113,7 @@ function ExpenseTracker() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-10 px-4 md:px-6">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center py-10 px-4 md:px-6 pt-28">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}

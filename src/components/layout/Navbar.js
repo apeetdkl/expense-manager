@@ -43,14 +43,22 @@ function Navbar() {
                     animation: 'gradientShift 10s ease infinite'
                 }}
             >
-                <div className="container mx-auto flex justify-between items-center p-4">
-                <Link 
-  to="/" 
-  className="text-xl font-extrabold text-white tracking-wide 
-             hover:text-gray-300 hover:scale-110 transition-transform duration-300 ease-in-out"
->
-  Expense<span className="animate-pulse">-</span>Manager
-</Link>
+               <div className="container mx-auto flex justify-between items-center p-4">
+  <Link 
+    to="/" 
+    className="flex items-center text-xl font-extrabold text-white tracking-wide 
+               hover:text-gray-300 hover:scale-110 transition-transform duration-400 ease-in-out"
+  >
+    {/* Logo Image */}
+    <img 
+      src={`${process.env.PUBLIC_URL}/logo-bg.png`} 
+      alt="Expense Manager Logo" 
+      className="w-16 h-14 mr-1" // Adjust size as needed
+    />
+
+    Expense-Manager
+  </Link>
+
                     
                     {/* ✅ Quick Links (Desktop) */}
                     <div className="hidden sm:flex items-center space-x-6">
