@@ -31,3 +31,4 @@ yarn-error.log*
 
 # Ignore specific config files
 supabaseClient.js
+.vercel

@@ -32,7 +32,7 @@ function ResetPassword() {
         }
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: "http://localhost:3000/reset-password",
+            redirectTo: "https://trackmyspends.vercel.app/reset-password",
         });
 
         if (error) {

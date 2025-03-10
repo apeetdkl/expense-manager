@@ -62,7 +62,7 @@ function Register() {
                 email,
                 password,
                 options: {
-                    emailRedirectTo: "http://localhost:3000/login",
+                    emailRedirectTo: "https://trackmyspends.vercel.app/login",
                     shouldCreateUser: true,
                 },
             });
