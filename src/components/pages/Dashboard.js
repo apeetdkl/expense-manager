@@ -16,28 +16,35 @@ function Dashboard() {
 
     useEffect(() => {
         const fetchUser = async () => {
+            setLoading(true); // Start loading
+    
             const { data, error } = await supabase.auth.getSession();
             if (error || !data.session) {
-                navigate("/login"); // Redirect if not logged in
+                navigate("/login"); 
                 return;
             }
-
+    
             const userId = data.session.user.id;
             setUserId(userId);
-
+    
             const { data: profile, error: profileError } = await supabase
                 .from("profiles")
                 .select("name")
                 .eq("id", userId)
                 .single();
-
+    
             if (!profileError) setUser(profile);
-
-            fetchBalance(userId);
+    
+            await fetchBalance(userId);
+    
+            // ⏳ Ensure at least 2 seconds loading time
+            setTimeout(() => {
+                setLoading(false);
+            }, 2000);
         };
-
+    
         fetchUser();
-
+    
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
                 setUserId(session.user.id);
@@ -46,9 +53,7 @@ function Dashboard() {
                 navigate("/login");
             }
         });
-
-        setLoading(false);
-
+    
         return () => {
             authListener.subscription.unsubscribe();
         };
@@ -102,83 +107,119 @@ function Dashboard() {
             .eq("user_id", userId);
     };
 
-
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <p className="text-lg text-green-400 animate-pulse">Loading Dashboard...</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+                {/* 🔄 Animated Loader */}
+                <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+    
+                {/* ✨ Loading Text */}
+                <p className="text-xl font-semibold text-green-400 animate-pulse">
+                    Loading...
+                </p>
             </div>
         );
     }
-
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-l from-[#ae8b9c] to-[#09203f] text-white">
+    
+  
+        return (
             
-            {/* ✅ Welcome Message */}
-            <motion.h1 
-                initial={{ opacity: 0, y: -20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ duration: 0.5 }}
-                className="text-3xl font-bold mb-6 text-center"
-            >
-                Welcome, {user?.name || "User"}! 👋
-            </motion.h1>
-
-            {/* ✅ Responsive Layout (Stack on Mobile, Grid on Larger Screens) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
+            <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gradient-to-l from-[#ae8b9c] to-[#09203f] text-white pt-24">
                 
-                {/* ✅ Enter Amount Input */}
-                <div className="bg-gray-900 p-6 rounded-lg shadow-lg border border-green-400 flex flex-col items-center">
-                    <motion.input 
-                        whileFocus={{ scale: 1.05 }}
-                        type="number"
-                        value={newBalance}
-                        onChange={(e) => setNewBalance(e.target.value)}
-                        placeholder="💰 Enter Amount"
-                        className="w-full p-3 bg-gray-700 text-white border border-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-center"
-                    />
-                </div>
-
-                {/* ✅ Balance Display */}
-                <div className="bg-gradient-to-l from-red-600 via-red-500 to-red-700 px-6 py-3 rounded-lg text-white font-bold shadow-lg flex items-center justify-center">
-                    📊 Balance: ₹{balance} 
-                </div>
-
-                {/* ✅ Add Personal Money */}
-                <motion.button 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddBalance}
-                    className="bg-gray-900 p-6 rounded-lg shadow-lg border border-blue-400 text-lg flex justify-center items-center w-full"
+                {/* ✅ Welcome Message */}
+                <motion.h1 
+                    initial={{ opacity: 0, y: -20 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ duration: 0.5 }}
+                    className="text-3xl font-bold mb-6 text-center"
                 >
-                    🏦 Add Personal Money
-                </motion.button>
+                    Welcome, {user?.name || "User"}! 👋
+                </motion.h1>
+    
+                {/* ✅ Responsive Layout (Stack on Mobile, Grid on Larger Screens) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-3xl">
+                    
 
-                {/* ✅ Edit Profile (Now Same Style as Other Buttons) */}
-                <Link to="/profile" className="w-full">
+
+                     {/* ✅ Balance Display */}
+                     <div className="bg-gradient-to-l from-red-600 via-red-500 to-red-700 px-6 py-3 rounded-lg text-white font-extrabold shadow-lg flex items-center justify-center text-l">
+                        📊 Remaining Balance : ₹{balance} 
+                    </div>
+
+
+
+                    {/* ✅ Enter Amount Input */}
+                    <div className="bg-gray-900 p-6 rounded-lg shadow-lg border border-green-400 flex flex-col items-center">
+                        <motion.input 
+                            whileFocus={{ scale: 1.05 }}
+                            type="number"
+                            value={newBalance}
+                            onChange={(e) => setNewBalance(e.target.value)}
+                            placeholder="Enter Amount & Click Add Balance"
+                            className="w-full p-3 bg-gray-700 text-white border border-green-400 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 text-center"
+                        />
+                    </div>
+    
+                   
+    
+                    {/* ✅ Add Personal Money */}
                     <motion.button 
                         whileHover={{ scale: 1.05 }} 
                         whileTap={{ scale: 0.95 }}
-                        className="bg-gray-900 p-6 rounded-lg shadow-lg border border-purple-400 text-lg flex justify-center items-center w-full"
+                        onClick={handleAddBalance}
+                        className="bg-gray-900 p-6 rounded-lg shadow-lg border border-blue-400 text-lg flex justify-center items-center w-full"
                     >
-                        ✏️ Edit Profile
+                        🏦 Add Balance
+                    </motion.button>
+    
+                    {/* ✅ Edit Profile */}
+                    <Link to="/profile" className="w-full">
+                        <motion.button 
+                            whileHover={{ scale: 1.05 }} 
+                            whileTap={{ scale: 0.95 }}
+                            className="bg-gray-900 p-6 rounded-lg shadow-lg border border-purple-400 text-lg flex justify-center items-center w-full"
+                        >
+                            ✏️ Edit Profile
+                        </motion.button>
+                    </Link>
+                </div>
+    
+                {/* ✅ Add Expense (Full-width button) */}
+                <Link to="/expenses" className="w-full max-w-3xl">
+                    <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-4 bg-gray-900 p-6 rounded-lg shadow-lg border border-red-400 text-lg flex justify-center items-center w-full"
+                    >
+                        🧾 Add Personal Expense
                     </motion.button>
                 </Link>
+    
+                {/* ✅ Group Expense (New Button) */}
+                <Link to="/expense-tracker" className="w-full max-w-3xl">
+                    <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-4 bg-gray-900 p-6 rounded-lg shadow-lg border border-yellow-400 text-lg flex justify-center items-center w-full"
+                    >
+                        📌 Add Group Expense
+                    </motion.button>
+                </Link>
+    
+                {/* ✅ Group Balance (New Button) */}
+                <Link to="/balances" className="w-full max-w-3xl">
+                    <motion.button 
+                        whileHover={{ scale: 1.05 }} 
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-4 bg-gray-900 p-6 rounded-lg shadow-lg border border-green-400 text-lg flex justify-center items-center w-full"
+                    >
+                        📊 View Group Balance
+                    </motion.button>
+                </Link>
+    
             </div>
-
-            {/* ✅ Add Expense (Full-width button on all screens) */}
-            <Link to="/expenses" className="w-full max-w-3xl">
-                <motion.button 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }}
-                    className="mt-4 bg-gray-900 p-6 rounded-lg shadow-lg border border-red-400 text-lg flex justify-center items-center w-full"
-                >
-                    🧾 Add Expense
-                </motion.button>
-            </Link>
-
-        </div>
-    );
-}
-
-export default Dashboard;       
+           
+        );
+    }
+    
+    export default Dashboard;    

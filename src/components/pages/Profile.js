@@ -11,9 +11,12 @@ function Profile() {
     const [upi, setUpi] = useState("");
     const [profilePicURL, setProfilePicURL] = useState("https://via.placeholder.com/150");
     const [loading, setLoading] = useState(true);
+    const [qrCodeURL, setQrCodeURL] = useState(""); 
 
     useEffect(() => {
         const fetchUser = async () => {
+
+            setLoading(true); // Start loading
             const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
             if (sessionError || !sessionData?.session) {
                 navigate("/login");
@@ -42,9 +45,11 @@ function Profile() {
                 setProfilePicURL(data.profile_image || "https://via.placeholder.com/150");
             }
 
+            // ⏳ Ensure at least 2 seconds loading time
+        setTimeout(() => {
             setLoading(false);
-        };
-
+        }, 1000);
+    };
         fetchUser();
     }, [navigate]);
 
@@ -71,79 +76,76 @@ function Profile() {
         }
     };
 
-    const handleProfilePicUpload = async (event) => {
+    const handleQRUpload = async (event) => {
         const file = event.target.files[0];
         if (!file || !user) return;
     
         const fileExt = file.name.split(".").pop();
-        const fileName = `${user.id}.${fileExt}`;
-        const filePath = `profile_pics/${fileName}`;
+        const fileName = `${user.id}_qr.${fileExt}`;
+        const filePath = `qr_codes/${fileName}`;
     
-        // Fetch the current profile image before updating
-        const { data: profileData, error: fetchError } = await supabase
+        // Fetch existing QR code before updating
+        const { data: qrData, error: fetchError } = await supabase
             .from("profiles")
-            .select("profile_image")
+            .select("payment_qr")
             .eq("id", user.id)
             .single();
     
         if (fetchError) {
-            console.error("❌ Error fetching existing profile image:", fetchError);
+            console.error("❌ Error fetching existing QR:", fetchError);
         }
     
-        const oldProfilePicURL = profileData?.profile_image;
+        const oldQrURL = qrData?.payment_qr;
     
-        // Upload new profile picture
+        // Upload new QR code to Supabase Storage
         const { error: uploadError } = await supabase.storage
-            .from("profile_pictures")
+            .from("payment_qrs")
             .upload(filePath, file, { upsert: true });
     
         if (uploadError) {
-            alert("❌ Error uploading profile picture: " + uploadError.message);
+            alert("❌ Error uploading QR code: " + uploadError.message);
             return;
         }
     
-        // Get public URL of the uploaded image
+        // Get public URL of the uploaded QR code
         const { data: publicUrlData } = supabase.storage
-            .from("profile_pictures")
+            .from("payment_qrs")
             .getPublicUrl(filePath);
     
         const publicURL = publicUrlData.publicUrl;
     
-        // Update profile picture URL in Supabase database
+        // Update QR code URL in Supabase database
         const { error: updateError } = await supabase
             .from("profiles")
-            .update({ profile_image: publicURL })
+            .update({ payment_qr: publicURL })
             .eq("id", user.id);
     
         if (updateError) {
-            alert("❌ Error saving profile picture: " + updateError.message);
+            alert("❌ Error saving QR code: " + updateError.message);
             return;
         }
     
-        // Delete old profile picture if it exists and is not the placeholder
-        if (oldProfilePicURL && !oldProfilePicURL.includes("via.placeholder.com")) {
-            const oldFileName = oldProfilePicURL.split("/").pop();
-            const oldFilePath = `profile_pics/${oldFileName}`;
+       
     
-            const { error: deleteError } = await supabase.storage
-                .from("profile_pictures")
-                .remove([oldFilePath]);
-    
-            if (deleteError) {
-                console.error("❌ Error deleting old profile picture:", deleteError);
-            }
-        }
-    
-        setProfilePicURL(publicURL);
-        alert("✅ Profile picture updated!");
+        setQrCodeURL(publicURL);
+        alert("✅ QR Code updated!");
     };
+   
+    
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-                <p className="text-lg text-green-400">Loading Profile...</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+                {/* 🔄 Animated Loader */}
+                <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+
+                {/* ✨ Loading Text */}
+                <p className="text-xl font-semibold text-green-400 animate-pulse">
+                    Loading Profile...
+                </p>
             </div>
         );
     }
+
 
     return (
       
@@ -152,19 +154,20 @@ function Profile() {
                 <h2 className="text-3xl font-bold text-center mb-6 text-green-400">Profile</h2>
                 <div className="flex flex-col items-center">
                     {/* Profile Image */}
-                    <div className="relative w-40 h-40 mb-4">
-                        <img
-                            src={profilePicURL}
-                            alt="Profile"
-                            className="w-full h-full rounded-full object-cover border-4 border-green-400 shadow-lg"
-                        />
-                    </div>
+                  {/* QR Code Image Preview */}
+            <div className="relative w-40 h-40 mb-4">
+                <img
+                    src={qrCodeURL || "https://via.placeholder.com/150"} // Default placeholder if no QR
+                    alt="Your Payment QR"
+                    className="w-full h-full rounded-lg object-cover border-4 border-green-400 shadow-lg"
+                />
+            </div>
 
-                    {/* Upload Button */}
-                    <label className="bg-green-500 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-green-600 transition font-semibold mb-6">
-                        📷 Upload Another Photo
-                        <input type="file" className="hidden" onChange={handleProfilePicUpload} />
-                    </label>
+            {/* Upload Button */}
+            <label className="bg-green-500 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-green-600 transition font-semibold mb-6">
+                📤 Upload Your Paytm QR
+                <input type="file" className="hidden" accept="image/*" onChange={handleQRUpload} />
+            </label>
 
                     {/* Profile Form */}
                     <form onSubmit={handleUpdate} className="w-full">

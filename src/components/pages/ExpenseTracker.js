@@ -10,7 +10,8 @@ import {
   RefreshCw ,
   Wallet,
   CreditCard,
-  Divide
+  Divide,
+  Loader
 } from 'lucide-react';
 
 
@@ -28,6 +29,8 @@ const ExpenseTracker = () => {
   const [expenses, setExpenses] = useState([]);
   const [description, setDescription] = useState("");
   const [ data, setData ] = useState([]);
+  const [loading, setLoading] = useState(false);
+
 
   // Fetch Users on Component Mount
   useEffect(() => {
@@ -133,39 +136,60 @@ const fetchUsers = async () => {
   };
   
   // Add Expense Transaction
-  const handleAddExpense = async () => {
-    try {
-      if (!validateInputs()) return;
-  
-      const shares = calculateShares();
-      const expenseData = {
-        payer_id: selectedPaidBy,
-        description,
-        amount: parseFloat(amount),
-        split_type: splitType,
-        participants: selectedParticipants,
-        created_at: new Date().toISOString(),
-      };
-  
-      console.log("Request Payload:", expenseData);
-  
-      const { data, error } = await supabase.from("expense").insert([expenseData]).select().single();
-  
-      if (error) {
-        console.error("Supabase Error:", error);
-        alert(`Expense Add Failed: ${error.message}`);
-        return;
-      }
-  
-      console.log("Inserted Expense Data:", data);
-      await updateBalances(selectedPaidBy, shares); // Call balance update function
-      alert("Expense added successfully!");
-      resetForm();
-    } catch (error) {
-      console.error("Full Error Object:", error);
-      alert(`Expense Add Failed: ${error.message}`);
+const handleAddExpense = async () => {
+  if (loading) return; // Prevent multiple clicks
+
+  setLoading(true); // Show full-screen loader
+
+  try {
+    if (!validateInputs()) {
+      setLoading(false);
+      return;
     }
-  };
+
+    const shares = calculateShares();
+    const expenseData = {
+      payer_id: selectedPaidBy,
+      description,
+      amount: parseFloat(amount),
+      split_type: splitType,
+      participants: selectedParticipants,
+      created_at: new Date().toISOString(),
+    };
+
+    console.log("Request Payload:", expenseData);
+
+    const { data, error } = await supabase
+      .from("expense")
+      .insert([expenseData])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase Error:", error);
+      setTimeout(() => {
+        setLoading(false);
+        alert(`❌ Expense Add Failed: ${error.message}`);
+      }, 3000);
+      return;
+    }
+
+    console.log("Inserted Expense Data:", data);
+    await updateBalances(selectedPaidBy, shares); // Call balance update function
+
+    setTimeout(() => {
+      setLoading(false);
+      alert("✅ Expense added successfully!");
+      resetForm();
+    }, 3000);
+  } catch (error) {
+    console.error("Full Error Object:", error);
+    setTimeout(() => {
+      setLoading(false);
+      alert(`❌ Expense Add Failed: ${error.message}`);
+    }, 3000);
+  }
+};
   
   // Update Balances After Expense
  // Update Balances After Expense
@@ -195,7 +219,9 @@ const updateBalances = async (payerId, shares) => {
         const newBalance = parseFloat(data[0].balance) + amountOwed;
         await supabase
           .from("balances")
-          .update({ balance: parseFloat(newBalance.toFixed(2)) })
+          .update({ balance: parseFloat(newBalance.toFixed(2)) 
+            
+          })
           .eq("from_user", share.user_id)
           .eq("to_user", payerId);
       } else {
@@ -276,7 +302,20 @@ const renderSplitTypeInputs = () => {
       setPercentShares(newPercentShares);
     };
   
+
+    // ✅ Full-screen loading UI
+if (loading) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+      <div className="w-12 h-12 border-4 border-emerald-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <p className="text-xl font-semibold text-emerald-400 animate-pulse">
+        Processing Expense...
+      </p>
+    </div>
+  );
+}
     return (
+      
       <div className="flex flex-col md:flex-row md:flex-wrap gap-4">
         {selectedParticipants.map((userId, index) => (
           <div 
@@ -327,17 +366,17 @@ const renderSplitTypeInputs = () => {
   // (with the renderSplitTypeInputs and other UI components)
   return (
     
-          <div className="p-4">
+          <div className="p-4 pt-24">
             <div className="max-w-6xl w-full mx-auto bg-dark-800 shadow-2xl rounded-2xl border border-dark-700 overflow-hidden">
               {/* Header */}
               <div className="bg-dark-700 p-4 pt-4 sm:p-5 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Wallet className="text-blue-400 w-6 h-6 sm:w-8 sm:h-8" />
-                  <h1 className="text-xl sm:text-2xl font-bold text-blue-300">Group Expense Form</h1>
+                  <Wallet className="text-red-500 w-6 h-6 sm:w-8 sm:h-8" />
+                  <h1 className="text-xl sm:text-2xl font-bold text-red-500">Group Expense Form</h1>
                 </div>
           
                         <button
-                          className="text-gray-400 hover:text-blue-400 transition"
+                          className="text-green-500 hover:text-red-600 transition"
                           onClick={resetForm}
                           
                         >
@@ -463,16 +502,29 @@ const renderSplitTypeInputs = () => {
 
           {/* Add Expense Button */}
           <div className="mt-6">
-            <button
-            onClick={handleAddExpense}
-              className="w-full px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center justify-center">
-              <PlusCircle className="mr-2 w-5 h-5" /> Add Expense
-            
-            </button>
-          </div>
+      <button
+        onClick={handleAddExpense}
+        disabled={loading} // Disable button when loading
+        className={`w-full px-4 py-3 rounded-lg transition flex items-center justify-center ${
+          loading ? "bg-gray-500 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"
+        } text-white`}
+      >
+        {loading ? (
+          <>
+            <Loader className="animate-spin mr-2 w-5 h-5" />
+            Adding Expense.....
+          </>
+        ) : (
+          <>
+            <PlusCircle className="mr-2 w-5 h-5" /> Add Expense
+          </>
+        )}
+      </button>
+    </div>
         </div>
       </div>
     </div>
+    
   );
 };
 
