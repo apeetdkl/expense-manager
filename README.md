@@ -1,6 +1,6 @@
 # Expense Manager
 
-![Expense Manager](https://yourimageurl.com/banner.png)
+![Expense Manager](https://trackmyspends.vercel.app/logo512.png)
 
 ## 🚀 Overview
 Expense Manager is a smart and intuitive **expense tracking application** designed to help users **manage their finances** efficiently. Whether you're tracking daily expenses, setting budgets, or analyzing spending patterns, Expense Manager makes financial management effortless.
